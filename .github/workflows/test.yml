@@ -36,5 +36,5 @@ jobs:
 
       - name: Display coverage report
         run: |
-          go tool cover -func=coverage.out  # Show the coverage output in the action logs
+          go tool cover -func=coverage.txt  # Show the coverage output in the action logs
 
