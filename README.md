@@ -1,4 +1,5 @@
 # **Helios Project**
+[![codecov](https://codecov.io/github/TheAlchemistKE/helios/graph/badge.svg?token=IYXT51mo60)](https://codecov.io/github/TheAlchemistKE/helios)
 
 Welcome to the **Helios Project**! This repository contains the source code and documentation for a project built using the **Helios** programming language. Helios is designed to provide a fast, efficient, and highly readable syntax for building scalable and maintainable applications. In this repository, you'll find the essential components of the project, including source code, build instructions, and more.
 
