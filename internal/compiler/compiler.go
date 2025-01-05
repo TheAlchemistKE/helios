@@ -1,4 +1,3 @@
-// compiler/compiler.go
 package compiler
 
 import (
@@ -164,6 +163,23 @@ func (c *Compiler) Compile(node ast.Node) error {
 		}
 		c.emit(code.OpReturnValue)
 
+	case *ast.BlockStatement:
+		for _, s := range node.Statements {
+			err := c.Compile(s)
+			if err != nil {
+				return err
+			}
+		}
+
+		// If the block is empty or the last statement is not a return value,
+		// we want to ensure some kind of return
+		if len(node.Statements) == 0 {
+			c.emit(code.OpNull)
+		} else if !c.lastInstructionIs(code.OpReturnValue) {
+			// If the last statement is not already a return, add a return value
+			c.emit(code.OpReturnValue)
+		}
+
 	case *ast.IfExpression:
 		err := c.Compile(node.Condition)
 		if err != nil {
@@ -177,8 +193,14 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return err
 		}
 
+		// Remove extra OpPop if last instruction
 		if c.lastInstructionIs(code.OpPop) {
 			c.removeLastPop()
+		}
+
+		// Ensure a return-like behavior for consequence
+		if !c.lastInstructionIs(code.OpReturnValue) {
+			c.emit(code.OpReturnValue)
 		}
 
 		jumpPos := c.emit(code.OpJump, 9999)
@@ -207,7 +229,13 @@ func (c *Compiler) Compile(node ast.Node) error {
 		if !ok {
 			return fmt.Errorf("undefined variable %s", node.Value)
 		}
-		c.loadSymbol(symbol)
+
+		// Special handling for function scope
+		if symbol.Scope == FunctionScope {
+			c.emit(code.OpCurrentClosure)
+		} else {
+			c.loadSymbol(symbol)
+		}
 
 	case *ast.StringLiteral:
 		str := &object.String{Value: node.Value}
@@ -375,6 +403,8 @@ func (c *Compiler) loadSymbol(s Symbol) {
 		c.emit(code.OpGetFree, s.Index)
 	case FunctionScope:
 		c.emit(code.OpCurrentClosure)
+	default:
+		panic(fmt.Sprintf("unknown symbol scope: %s", s.Scope))
 	}
 }
 
